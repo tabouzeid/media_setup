@@ -1,0 +1,129 @@
+version: '3'
+networks:
+  default:
+    driver: bridge
+volumes:
+  media_videos:
+    driver_opts:
+      type: nfs
+      o: addr=${MEDIA_SERVER},rw,vers=4
+      device: :${VIDEOS_DIR}
+  media_downloaded:
+    driver_opts:
+      type: nfs
+      o: addr=${MEDIA_SERVER},rw,vers=4
+      device: :${DOWNLOADS_DIR}/downloaded
+  media_incomplete:
+    driver_opts:
+      type: nfs
+      o: addr=${MEDIA_SERVER},rw,vers=4
+      device: :${DOWNLOADS_DIR}/incomplete
+services:
+  plex:
+    image: plexinc/pms-docker:latest
+    network_mode: "host"
+    container_name: plex
+    restart: always
+    environment:
+      - TZ=${TIMEZONE}
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/plex/config:/config
+      - ${SERVICES_CONFIG_DIR}/plex/transcode:/transcode
+      - media_videos:/data
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/jackett:/config
+    ports:
+      - 9117:9117
+    restart: unless-stopped
+  rtorrentvpn:
+    image: binhex/arch-rtorrentvpn:latest
+    container_name: rtorrentvpn
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "com.docker.compose.project="
+    environment:
+      - VPN_ENABLED=yes
+      - VPN_USER=${VPN_USERNAME}
+      - VPN_PASS=${VPN_PASSWORD}
+      - VPN_PROV=pia
+      - STRICT_PORT_FORWARD=yes
+      - ENABLE_PRIVOXY=yes
+      - ENABLE_FLOOD=yes
+      - ENABLE_AUTODL_IRSSI=yes
+      - ENABLE_RPC2=yes
+      - ENABLE_RPC2_AUTH=yes
+      - LAN_NETWORK=192.168.1.0/24
+      - NAME_SERVERS=209.222.18.222,37.235.1.174,1.1.1.1,8.8.8.8,209.222.18.218,37.235.1.177,1.0.0.1,8.8.4.4
+      - DEBUG=false
+      - PHP_TZ=${TIMEZONE}
+      - UMASK=000
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/rtorrentvpn/config:/config
+      - media_downloaded:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 3000:3000
+      - 8118:8118
+      - 9080:9080
+      - 9443:9443
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: always
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/sonarr:/config
+      - media_downloaded:/downloads
+      - media_videos:/tv
+    ports:
+      - 8989:8989
+    links:
+      - rtorrentvpn:rtorrentvpn
+      - jackett:jackett
+      - sabnzbd:sabnzbd
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    restart: always
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/radarr:/config
+      - media_downloaded:/downloads
+      - media_videos:/movies
+    ports:
+      - 7878:7878
+    links:
+      - rtorrentvpn:rtorrentvpn
+      - jackett:jackett
+      - sabnzbd:sabnzbd
+  sabnzbd:
+    image: linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    restart: always
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIMEZONE}
+    volumes:
+      - ${SERVICES_CONFIG_DIR}/sabnzbd:/config
+      - media_downloaded:/downloads
+      - media_incomplete:/incomplete-downloads
+    ports: 
+      - 8088:8080
+      - 9090:9090
