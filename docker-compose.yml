@@ -67,8 +67,8 @@ services:
       - DEBUG=false
       - PHP_TZ=${TIMEZONE}
       - UMASK=000
-      - PUID=1000
-      - PGID=1000
+      - PUID=0
+      - PGID=0
     volumes:
       - ${SERVICES_CONFIG_DIR}/rtorrentvpn/config:/config
       - media_downloaded:/data
