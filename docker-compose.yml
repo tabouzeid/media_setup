@@ -49,8 +49,6 @@ services:
     restart: always
     cap_add:
       - NET_ADMIN
-    labels:
-      - "com.docker.compose.project="
     environment:
       - VPN_ENABLED=yes
       - VPN_USER=${VPN_USERNAME}
