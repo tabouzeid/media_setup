@@ -6,7 +6,7 @@ This is a complete set of services to download and play video content.
 * [Sonarr](https://sonarr.tv) is a service that searches for and downloads episodes for tv shows and organizes them on your local machine
 * [Radarr](https://radarr.video) is a service that searches for and downloads movies and organizes them on your local machine
 * [Sabnzbd](https://sabnzbd.org) is a [Usenet](https://en.wikipedia.org/wiki/Usenet) downloader
-* [rTorrent](https://rakshasa.github.io/rtorrent/) is a torrent download client.
+* [rTorrent](https://github.com/binhex/arch-rtorrentvpn) is a torrent download client with vpn support
 
 ## Environmental Variables
 This docker-compose file uses environmental variables in order for it to work:
